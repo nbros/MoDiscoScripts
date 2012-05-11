@@ -1,6 +1,8 @@
 #!/bin/bash -x
-
 # This builds an Eclipse Package for developers. The versions and platforms are chosen as parameters.
+
+set -o errexit
+set -o nounset
 
 # where to install
 #INSTALL_LOC=$(pwd)/install # doesn't work with Cygwin
@@ -15,7 +17,7 @@ INSTALL_REQUIRED_PLUGINS=true
 # Install Mylyn
 INSTALL_MYLYN=true
 # Install Egit team provider for Git
-INSTALL_EGIT=false
+INSTALL_EGIT=true
 # The checkstyle plug-in for Eclipse
 INSTALL_CHECKSTYLE=true
 # Install the Subclipse plug-in for SVN support.
@@ -28,9 +30,9 @@ INSTALL_EMFFACET=true
 INSTALL_MODISCO=true
 
 # Choose from which update site to install. For example, "indigo" means the latest from the indigo update site, whereas "helios/201006230900" means plug-ins from Eclipse 3.6.0 only.
-ECLIPSE_VERSION=juno # indigo, indigo/201106030900, helios, europa, galileo...
+ECLIPSE_VERSION=juno/201204110900 # indigo, indigo/201106030900, helios, europa, galileo...
 # Choose which Orbit update site must be used
-ORBIT_VERSION=S20111018035124
+ORBIT_VERSION=S20120428190502
 # Use eclipse.ialto.com for faster downloads (from France). download.eclipse.org (in Canada) is the reference download site, but is much slower (~10KiB/s)
 MIRROR=eclipse.ialto.com
 # The operating system that will run Eclipse
@@ -46,23 +48,28 @@ relengZip=org.eclipse.releng.tools-3.6.2.zip
 #eclipseDrop=R-3.7-201106131736
 #relengZip=org.eclipse.releng.tools-3.7.zip
 
+#MAIN_REPO=http://build.eclipse.org/juno/aggregation/final
+MAIN_REPO=http://$MIRROR/releases/$ECLIPSE_VERSION
+
 if [ $INSTALL_OVER_PREVIOUS_INSTALL != "true" ]; then
   rm -rf "$INSTALL_LOC"
 fi
 
-#wget http://download.eclipse.org/tools/buckminster/products/director_latest.zip
 if [ ! -e director_latest.zip ]; then
-  wget -q http://$MIRROR/tools/buckminster/products/director_latest.zip
+  wget http://$MIRROR/tools/buckminster/products/director_latest.zip
 fi
 
-#rm -rf director
+rm -rf director
 if [ ! -d director ]; then
   unzip director_latest.zip
+  # use a patched equinox.p2.transport.ecf to force the use of mirrors
+  cp $(ls -1 libs/org.eclipse.equinox.p2.transport.ecf_*) director/plugins
+  sed -ie 's#org\.eclipse\.equinox\.p2\.transport\.ecf,.*\?,plugins/org\.eclipse\.equinox\.p2\.transport\.ecf_.*\?\.jar,4,false#org.eclipse.equinox.p2.transport.ecf,1.0.0.201110191145,plugins/org.eclipse.equinox.p2.transport.ecf_1.0.0.201110191145.jar,4,false#g' director/configuration/org.eclipse.equinox.simpleconfigurator/bundles.info
 fi
 
 # Copyright tool
 if [ ! -e $relengZip ]; then
-  wget -q http://$MIRROR/eclipse/downloads/drops/$eclipseDrop/$relengZip
+  wget http://$MIRROR/eclipse/downloads/drops/$eclipseDrop/$relengZip
 fi
 
 director=$(ls -1 director/plugins/org.eclipse.equinox.launcher_*.jar | sort | tail -1 | tr -d '\r')
@@ -71,13 +78,13 @@ installCommand="java -jar $director -profile SDKProfile -profileProperties org.e
 
 if [ $INSTALL_SDK = "true" ]; then
   $installCommand \
-  -r http://$MIRROR/releases/$ECLIPSE_VERSION \
+  -r "$MAIN_REPO" \
   -i org.eclipse.sdk.ide
 fi
 
 if [ $INSTALL_REQUIRED_PLUGINS = "true" ]; then
   $installCommand \
-  -r http://$MIRROR/releases/$ECLIPSE_VERSION \
+  -r "$MAIN_REPO" \
   -r http://$MIRROR/tools/orbit/downloads/drops/$ORBIT_VERSION/repository/ \
   -r http://$MIRROR/technology/swtbot/helios/dev-build/update-site \
   -r jar:file:$relengZip!/ \
@@ -117,7 +124,7 @@ fi
 
 if [ $INSTALL_MYLYN = "true" ]; then
   $installCommand \
-  -r http://$MIRROR/releases/$ECLIPSE_VERSION \
+  -r "$MAIN_REPO" \
   -i org.eclipse.mylyn.hudson.feature.group \
   -i org.eclipse.mylyn.ide_feature.feature.group \
   -i org.eclipse.mylyn.java_feature.feature.group \
@@ -135,26 +142,27 @@ fi
  
 if [ $INSTALL_EGIT = "true" ]; then
   $installCommand \
-  -r http://$MIRROR/releases/$ECLIPSE_VERSION \
+  -r "$MAIN_REPO" \
   -i org.eclipse.egit.feature.group \
   -i org.eclipse.jgit.feature.group \
   -i org.eclipse.egit.mylyn.feature.group
 fi
 
+checkstyleZip="net.sf.eclipsecs-updatesite_5.5.0.201111092104-bin.zip"
 if [ $INSTALL_CHECKSTYLE = "true" ]; then
-  if [ ! -e net.sf.eclipsecs-updatesite-5.4.1.201109192037-bin.zip ]; then
-    wget http://sourceforge.net/projects/eclipse-cs/files/Eclipse%20Checkstyle%20Plug-in/5.4.1/net.sf.eclipsecs-updatesite-5.4.1.201109192037-bin.zip/download
+  if [ ! -e "$checkstyleZip" ]; then
+    wget http://sourceforge.net/projects/eclipse-cs/files/Eclipse%20Checkstyle%20Plug-in/5.5.0/$checkstyleZip/download
   fi
 
   $installCommand \
-  -r http://$MIRROR/releases/$ECLIPSE_VERSION \
-  -r "jar:file:net.sf.eclipsecs-updatesite-5.4.1.201109192037-bin.zip!/" \
+  -r "$MAIN_REPO" \
+  -r "jar:file:$checkstyleZip!/" \
   -i net.sf.eclipsecs.feature.group
 fi
 
 if [ $INSTALL_SUBCLIPSE = "true" ]; then
   $installCommand \
-  -r http://$MIRROR/releases/$ECLIPSE_VERSION \
+  -r "$MAIN_REPO" \
   -r http://subclipse.tigris.org/update_1.6.x/ \
   -i org.tmatesoft.svnkit.feature.group \
   -i com.sun.jna.feature.group \
@@ -168,7 +176,7 @@ fi
 
 if [ $INSTALL_WINDOWBUILDER = "true" ]; then
   $installCommand \
-  -r http://$MIRROR/releases/$ECLIPSE_VERSION \
+  -r "$MAIN_REPO" \
   -i org.eclipse.wb.core.feature.feature.group \
   -i org.eclipse.wb.doc.user.feature.feature.group \
   -i org.eclipse.wb.core.ui.feature.feature.group \
@@ -183,7 +191,7 @@ fi
 
 if [ $INSTALL_EMFFACET = "true" ]; then
   $installCommand \
-  -r http://$MIRROR/releases/$ECLIPSE_VERSION \
+  -r "$MAIN_REPO" \
   -r http://$MIRROR/tools/orbit/downloads/drops/$ORBIT_VERSION/repository/ \
   -i org.eclipse.emf.facet.sdk.feature.group
 fi
@@ -192,7 +200,7 @@ if [ $INSTALL_MODISCO = "true" ]; then
   $installCommand \
   -r http://$MIRROR/facet/updates/milestones/0.2/ \
   -r http://$MIRROR/modeling/mdt/modisco/updates/milestones/0.10/ \
-  -r http://$MIRROR/releases/$ECLIPSE_VERSION \
+  -r "$MAIN_REPO" \
   -r http://$MIRROR/tools/orbit/downloads/drops/$ORBIT_VERSION/repository/ \
   -i org.eclipse.modisco.sdk.feature.feature.group \
   -i org.eclipse.modisco.dev.feature.feature.group
