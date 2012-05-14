@@ -98,7 +98,6 @@ if [ $INSTALL_REQUIRED_PLUGINS = "true" ]; then
   -i org.eclipse.emf.compare.sdk.feature.group \
   -i org.eclipse.emf.query.sdk.feature.group \
   -i org.eclipse.emf.validation.sdk.feature.group \
-  -i org.eclipse.jet.sdk.feature.group \
   -i org.eclipse.net4j.sdk.feature.group \
   -i org.eclipse.ocl.all.sdk.feature.group \
   -i org.eclipse.m2m.qvt.oml.sdk.feature.group \
@@ -151,7 +150,7 @@ fi
 checkstyleZip="net.sf.eclipsecs-updatesite_5.5.0.201111092104-bin.zip"
 if [ $INSTALL_CHECKSTYLE = "true" ]; then
   if [ ! -e "$checkstyleZip" ]; then
-    wget http://sourceforge.net/projects/eclipse-cs/files/Eclipse%20Checkstyle%20Plug-in/5.5.0/$checkstyleZip/download
+    wget http://sourceforge.net/projects/eclipse-cs/files/Eclipse%20Checkstyle%20Plug-in/5.5.0/$checkstyleZip/download -O "$checkstyleZip"
   fi
 
   $installCommand \
@@ -193,7 +192,7 @@ if [ $INSTALL_EMFFACET = "true" ]; then
   $installCommand \
   -r "$MAIN_REPO" \
   -r http://$MIRROR/tools/orbit/downloads/drops/$ORBIT_VERSION/repository/ \
-  -i org.eclipse.emf.facet.sdk.feature.group
+  -i org.eclipse.emf.facet.sdk.feature.feature.group
 fi
 
 if [ $INSTALL_MODISCO = "true" ]; then
