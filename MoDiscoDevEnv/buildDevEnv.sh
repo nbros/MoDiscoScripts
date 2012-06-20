@@ -30,9 +30,9 @@ INSTALL_EMFFACET=true
 INSTALL_MODISCO=true
 
 # Choose from which update site to install. For example, "indigo" means the latest from the indigo update site, whereas "helios/201006230900" means plug-ins from Eclipse 3.6.0 only.
-ECLIPSE_VERSION=juno/201204110900 # indigo, indigo/201106030900, helios, europa, galileo...
+ECLIPSE_VERSION=juno/201206270900 # indigo, indigo/201106030900, helios, europa, galileo...
 # Choose which Orbit update site must be used
-ORBIT_VERSION=S20120428190502
+ORBIT_VERSION=R20120526062928
 # Use eclipse.ialto.com for faster downloads (from France). download.eclipse.org (in Canada) is the reference download site, but is much slower (~10KiB/s)
 MIRROR=eclipse.ialto.com
 # The operating system that will run Eclipse
@@ -42,8 +42,8 @@ WINDOW_SYSTEM=win32 # wpf, gtk, cocoa, carbon
 ARCHITECTURE=x86_64 # x86, ppc, ...
 
 # for the copyright tool
-eclipseDrop=R-3.6.2-201102101200
-relengZip=org.eclipse.releng.tools-3.6.2.zip
+eclipseDrop=R-3.8-201206081200
+relengZip=org.eclipse.releng.tools-3.8.zip
 # the Indigo version doesn't work with Subclipse (Bug 354241)
 #eclipseDrop=R-3.7-201106131736
 #relengZip=org.eclipse.releng.tools-3.7.zip
@@ -197,8 +197,6 @@ fi
 
 if [ $INSTALL_MODISCO = "true" ]; then
   $installCommand \
-  -r http://$MIRROR/facet/updates/milestones/0.2/ \
-  -r http://$MIRROR/modeling/mdt/modisco/updates/milestones/0.10/ \
   -r "$MAIN_REPO" \
   -r http://$MIRROR/tools/orbit/downloads/drops/$ORBIT_VERSION/repository/ \
   -i org.eclipse.modisco.sdk.feature.feature.group \
